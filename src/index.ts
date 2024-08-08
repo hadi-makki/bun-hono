@@ -1,70 +1,29 @@
 import { Hono } from 'hono';
-import { HTTPException } from 'hono/http-exception';
-import { sequelize } from './entities/db';
-import { User } from './entities/user-entity';
-import { Posts } from './entities/post-entity';
-import { Category } from './entities/category-entity';
+import { typeOrm, userRepository } from './entities/db';
 
 const app = new Hono();
-sequelize.sync({ alter: true }).then(() => {
-  console.log('Database schema updated to match models!');
-});
+
+await typeOrm
+  .initialize()
+  .then(() => {
+    console.log('Data Source has been initialized!');
+  })
+  .catch((err) => {
+    console.error('Error during Data Source initialization:', err);
+  });
 
 app.get('/', async (c) => {
-  // const user = await User.create({
-  //   username: 'bun',
-  //   birthday: new Date(),
-  // });
-
-  const allUsers = await User.findAll();
-  console.log(allUsers);
-
-  const user = await User.findOne({
-    where: { username: 'bun' },
-    include: Posts,
+  const user = await userRepository.save({
+    username: 'John Doe',
+    dateOfBirth: new Date('1990-01-01').toISOString(),
   });
-  console.log(user);
+  console.log('User created:', user);
+  return c.json(user);
+});
 
-  if (!user) {
-    throw new HTTPException(404);
-  }
-
-  // const createCategory = await Category.create({
-  //   name: 'Test',
-  // });
-  const createCategory = await Category.findOne({
-    where: { name: 'Test' },
-  });
-
-  if (!createCategory) {
-    throw new HTTPException(404);
-  }
-
-  // const createPost = await Posts.create({
-  //   title: 'Hello World',
-  //   content: 'This is a test post',
-  //   userId: user.id,
-  // });
-
-  // Associate the post with the category
-  // await createPost.addCategory(createCategory);
-
-  const getPost = await Posts.findAll({
-    include: [
-      {
-        model: Category,
-        through: {
-          attributes: [],
-        },
-      },
-      {
-        model: User,
-        attributes: ['id', 'username', 'birthday'],
-      },
-    ],
-  });
-
-  return c.json(getPost);
+app.onError((err, c) => {
+  console.error(`${err}`);
+  return c.text('Custom Error Message', 500);
 });
 
 export default {
