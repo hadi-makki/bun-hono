@@ -1,18 +1,6 @@
-import { DataSource } from 'typeorm';
-import { User } from './user.entity';
-import { Category } from './category.entity';
-import { Post } from './post.entity';
+import { Sequelize } from 'sequelize';
 
-export const typeOrm = new DataSource({
-  type: 'postgres',
+export const sequelize = new Sequelize('bun-db', 'postgres', 'postgres', {
   host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'postgres',
-  database: 'bun-db',
-  entities: ['src/*/**.entity.ts'],
-  logging: true,
-  synchronize: true,
+  dialect: 'postgres',
 });
-
-export const userRepository = typeOrm.getRepository(User);
